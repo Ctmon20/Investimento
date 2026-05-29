@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartInvest Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; min-height: 100vh; padding: 15px; }
+        .container-app { width: 100%; max-width: 450px; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 24px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .label-text { font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 6px; display: block; text-transform: uppercase; }
+        .input-style { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; transition: border 0.3s; }
+        .input-style:focus { border-color: #2563eb; outline: none; }
+        .gradient-btn { background: #1e293b; color: white; width: 100%; padding: 14px; border-radius: 10px; font-weight: bold; }
+        .ad-placeholder { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; color: #94a3b8; background: #f1f5f9; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="container-app">
+        <h1 class="text-2xl font-bold text-slate-900 mb-6 text-center">SimuladorInvest</h1>
+
+        <div class="card">
+            <h2 class="text-lg font-bold mb-4 text-slate-800">Simulador 100% CDI</h2>
+            
+            <label class="label-text">Investimento Mensal (R$)</label>
+            <input type="number" id="mensal" placeholder="Ex: 200" class="input-style mb-4">
+            
+            <label class="label-text">Tempo (Anos)</label>
+            <input type="number" id="anos" placeholder="Ex: 10" class="input-style mb-4">
+            
+            <button onclick="calcular()" class="gradient-btn">Simular Rentabilidade</button>
+
+            <div class="mt-8 text-center">
+                <p class="text-sm text-slate-500 uppercase tracking-widest">Total Acumulado</p>
+                <div id="resultado" class="text-4xl font-black text-blue-600">R$ 0,00</div>
+                <p id="taxa-info" class="text-xs text-slate-400 mt-2">Clique para calcular</p>
+            </div>
+            <div class="mt-6"><canvas id="meuGrafico"></canvas></div>
+        </div>
+
+        <div id="container-anuncio" class="ad-placeholder">
+            <ins class="surfe-be" data-sid="420519"></ins>
+        </div>
+
+        <script>
+            // Carrega o script da plataforma
+            const script = document.createElement('script');
+            script.src = "//static.surfe.pro/js/net.js";
+            document.head.appendChild(script);
+
+            // Lógica de atualização a cada 60 segundos
+            setInterval(() => {
+                const container = document.getElementById('container-anuncio');
+                // Limpa o conteúdo atual
+                container.innerHTML = '<ins class="surfe-be" data-sid="420519"></ins>';
+                // Reinicializa o anúncio da Surfe
+                if (window.adsurfebe) {
+                    window.adsurfebe.push({});
+                }
+            }, 60000); // 60.000 milissegundos = 60 segundos
+        </script>
+
+        <div class="card">
+            <h2 class="text-lg font-bold mb-4 text-slate-800">Custo do Hábito</h2>
+            <label class="label-text">Gasto diário (R$)</label>
+            <div class="flex gap-2">
+                <input type="number" id="habit" placeholder="Ex: 15" class="input-style">
+                <button onclick="calcularHabito()" class="bg-blue-600 text-white px-6 rounded-lg font-bold">Calc</button>
+            </div>
+            <p id="resHabito" class="mt-3 text-sm text-slate-600">Descubra quanto você perde por ano.</p>
+        </div>
+
+        <a href="SEU_LINK_DE_AFILIADO_AQUI" class="block bg-blue-600 text-white text-center font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition">
+            ABRIR CONTA GRATUITA
+        </a>
+    </div>
+
+    <script>
+        let chart;
+        async function buscarCDI() {
+            try {
+                const res = await fetch('https://brasilapi.com.br/api/taxas/v1');
+                const data = await res.json();
+                const cdi = data.find(item => item.nome === "CDI");
+                const taxa = cdi ? cdi.valor / 100 : 0.1075;
+                document.getElementById('taxa-info').innerText = `Baseado em ${cdi.valor}% CDI ao ano`;
+                return taxa;
+            } catch (e) { return 0.1075; }
+        }
+
+        async function calcular() {
+            const cdiAnual = await buscarCDI();
+            const taxaMensal = Math.pow(1 + cdiAnual, 1/12) - 1;
+            const mensal = parseFloat(document.getElementById('mensal').value) || 0;
+            const anos = parseFloat(document.getElementById('anos').value) || 0;
+            const meses = anos * 12;
+            
+            let total = 0;
+            for(let i = 0; i < meses; i++) { total = (total + mensal) * (1 + taxaMensal); }
+            
+            document.getElementById('resultado').innerText = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            
+            const ctx = document.getElementById('meuGrafico').getContext('2d');
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Investido', 'Rendimentos'], datasets: [{ data: [mensal * meses, total - (mensal * meses)], backgroundColor: ['#3b82f6', '#10b981'] }] } });
+        }
+
+        function calcularHabito() {
+            const v = parseFloat(document.getElementById('habit').value) || 0;
+            document.getElementById('resHabito').innerHTML = `Se gasta R$ ${v}/dia, em 1 ano você perde <b>R$ ${(v * 365).toLocaleString('pt-BR')}</b>.`;
+        }
+    </script>
+</body>
+</html>

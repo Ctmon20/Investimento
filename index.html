@@ -3,125 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SimuladorInvest</title>
+    <title>SimuladorInvest - Calcule seus Rendimentos CDI</title>
+    <meta name="description" content="Simulador de investimentos gratuito para calcular seus rendimentos baseados na taxa CDI atual. Planeje seu futuro financeiro com facilidade.">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
-        body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; min-height: 100vh; padding: 15px; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
         .container-app { width: 100%; max-width: 450px; }
-        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 24px; margin-bottom: 20px; border: 1px solid #0a6dee; }
-        .label-text { font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 6px; display: block; text-transform: uppercase; }
-        .input-style { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 1rem; transition: border 0.3s; }
-        .gradient-btn { background: #1e293b; color: white; width: 100%; padding: 14px; border-radius: 10px; font-weight: bold; }
-        .ad-placeholder { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; color: #94a3b8; background: #f1f5f9; margin: 20px 0; }
-        
-        /* Estilos da Tela de Carregamento */
-        #splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #ffffff; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 9999;
-        }
-        .spinner {
-            width: 50px; height: 50px; border: 5px solid #e2e8f0;
-            border-top: 5px solid #2563eb; border-radius: 50%;
-            animation: spin 1s linear infinite; margin-bottom: 20px;
-        }
+        .card { background: white; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 20px; }
+        .label-text { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 5px; display: block; }
+        .input-box { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; }
+        .res-card { background: #f8fafc; border-radius: 12px; padding: 15px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
+
+        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner { width: 50px; height: 50px; border: 5px solid #e2e8f0; border-top: 5px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div id="splash-screen">
-        <img src="logo.png" alt="Logo" class="mb-6" style="max-width: 150px;">
         <h1 class="text-3xl font-bold text-blue-600 mb-6">SimuladorInvest</h1>
         <div class="spinner"></div>
-        <p class="text-slate-500 font-medium">Carregando dados...</p>
+        <p class="text-slate-500 font-medium">Conectando ao CDI atual...</p>
     </div>
 
     <div class="container-app">
-        <div class="bg-blue-600 rounded-xl p-4 mb-6 shadow-md">
-            <h1 class="text-2xl font-bold text-white text-center">SimuladorInvest</h1>
+        <div class="flex items-center gap-3 mb-6 bg-blue-200 p-4 rounded-xl border border-blue-300">
+            <div class="bg-blue-700 p-3 rounded-xl text-white">⚙️</div>
+            <div>
+                <h1 class="text-xl font-bold text-blue-950">Simulador de Investimentos</h1>
+                <p id="cdi-status" class="text-sm text-blue-800 font-medium">Buscando taxa...</p>
+            </div>
         </div>
 
         <div class="card">
-            <h2 class="text-lg font-bold mb-4 text-slate-800">Simulador 100% CDI</h2>
-            <label class="label-text">Investimento Mensal (R$)</label>
-            <input type="number" id="mensal" placeholder="Ex: 200" class="input-style mb-4">
-            <label class="label-text">Tempo (Anos)</label>
-            <input type="number" id="anos" placeholder="Ex: 10" class="input-style mb-4">
-            <button onclick="calcular()" class="gradient-btn">Simular Rentabilidade</button>
-
-            <div class="mt-8 text-center">
-                <p class="text-sm text-slate-500 uppercase tracking-widest">Total Acumulado</p>
-                <div id="resultado" class="text-4xl font-black text-blue-600">R$ 0,00</div>
-                <p id="taxa-info" class="text-xs text-slate-400 mt-2">Clique para calcular</p>
-            </div>
-            <div class="mt-6"><canvas id="meuGrafico"></canvas></div>
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">Dados do Investimento</h2>
+            <label class="label-text">Aporte Mensal (R$)</label>
+            <input type="number" id="mensal" class="input-box" value="1000" oninput="calcular()">
+            <label class="label-text">Taxa CDI Anual (%)</label>
+            <input type="number" id="taxa" class="input-box" value="13.5" step="0.1" oninput="calcular()">
+            <label class="label-text">Tempo de Investimento (Anos)</label>
+            <input type="number" id="tempo" class="input-box" value="5" oninput="calcular()">
         </div>
 
-        <div id="container-anuncio" class="ad-placeholder">
-            <ins class="surfe-be" data-sid="420519"></ins>
+        <div id="resultado-container">
+            <div class="res-card">
+                <p class="text-xs text-slate-500 uppercase">Total Investido</p>
+                <div id="res-investido" class="text-xl font-bold">R$ 0,00</div>
+            </div>
+            <div class="res-card">
+                <p class="text-xs text-slate-500 uppercase">Rendimento</p>
+                <div id="res-rendimento" class="text-xl font-bold">R$ 0,00</div>
+            </div>
+            <div class="res-card bg-orange-50 border-orange-100">
+                <p class="text-xs text-orange-600 uppercase">Valor Final</p>
+                <div id="res-final" class="text-2xl font-black text-orange-600">R$ 0,00</div>
+            </div>
         </div>
 
         <div class="card">
-            <h2 class="text-lg font-bold mb-4 text-slate-800">Custo do Hábito</h2>
-            <label class="label-text">Gasto diário (R$)</label>
-            <div class="flex gap-2">
-                <input type="number" id="habit" placeholder="Ex: 15" class="input-style">
-                <button onclick="calcularHabito()" class="bg-blue-600 text-white px-6 rounded-lg font-bold">Calc</button>
-            </div>
-            <p id="resHabito" class="mt-3 text-sm text-slate-600">Descubra quanto você perde por ano.</p>
+            <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">Composição do Valor</h2>
+            <canvas id="meuGrafico"></canvas>
+        </div>
+
+        <div class="card">
+            <h3 class="font-bold text-gray-800 mb-2">Por que usar o SimuladorInvest?</h3>
+            <p class="text-sm text-gray-600">Nosso simulador utiliza a taxa CDI em tempo real para que você tenha uma projeção fiel de como seu dinheiro rende na renda fixa. O aporte mensal constante é a forma mais eficaz de acumular patrimônio através dos juros compostos.</p>
         </div>
     </div>
 
+    <footer class="w-full text-center p-6 text-gray-500 text-xs">
+        <p>&copy; 2026 SimuladorInvest. Todos os direitos reservados.</p>
+        <div class="mt-2 space-x-2">
+            <a href="privacidade.html" class="hover:text-blue-600">Política de Privacidade</a> |
+            <a href="termos.html" class="hover:text-blue-600">Termos de Uso</a>
+        </div>
+    </footer>
+
     <script>
-        // Lógica da Tela de Carregamento
-        setTimeout(() => {
-            document.getElementById('splash-screen').style.display = 'none';
-        }, 5000);
-
-        // Carrega o script da plataforma
-        const script = document.createElement('script');
-        script.src = "//static.surfe.pro/js/net.js";
-        document.head.appendChild(script);
-
-        // Lógica de atualização a cada 60 segundos
-        setInterval(() => {
-            const container = document.getElementById('container-anuncio');
-            container.innerHTML = '<ins class="surfe-be" data-sid="420519"></ins>';
-            if (window.adsurfebe) { window.adsurfebe.push({}); }
-        }, 60000);
-
+        Chart.register(ChartDataLabels);
         let chart;
+
         async function buscarCDI() {
             try {
                 const res = await fetch('https://brasilapi.com.br/api/taxas/v1');
                 const data = await res.json();
                 const cdi = data.find(item => item.nome === "CDI");
-                const taxa = cdi ? cdi.valor / 100 : 0.1075;
-                document.getElementById('taxa-info').innerText = `Baseado em ${cdi.valor}% CDI ao ano`;
-                return taxa;
-            } catch (e) { return 0.1075; }
+                if (cdi) {
+                    document.getElementById('taxa').value = cdi.valor;
+                    document.getElementById('cdi-status').innerText = `Baseado em ${cdi.valor}% CDI atual`;
+                }
+            } catch (e) {
+                document.getElementById('cdi-status').innerText = "Calcule com base no CDI";
+            } finally {
+                setTimeout(() => { document.getElementById('splash-screen').style.display = 'none'; }, 1000);
+                calcular();
+            }
         }
 
-        async function calcular() {
-            const cdiAnual = await buscarCDI();
-            const taxaMensal = Math.pow(1 + cdiAnual, 1/12) - 1;
+        function calcular() {
             const mensal = parseFloat(document.getElementById('mensal').value) || 0;
-            const anos = parseFloat(document.getElementById('anos').value) || 0;
+            const taxaAnual = parseFloat(document.getElementById('taxa').value) / 100 || 0;
+            const anos = parseInt(document.getElementById('tempo').value) || 0;
+            const taxaMensal = Math.pow(1 + taxaAnual, 1/12) - 1;
             const meses = anos * 12;
             let total = 0;
-            for(let i = 0; i < meses; i++) { total = (total + mensal) * (1 + taxaMensal); }
-            document.getElementById('resultado').innerText = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            const ctx = document.getElementById('meuGrafico').getContext('2d');
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Investido', 'Rendimentos'], datasets: [{ data: [mensal * meses, total - (mensal * meses)], backgroundColor: ['#3b82f6', '#10b981'] }] } });
+            let investido = 0;
+            for(let i = 1; i <= meses; i++) {
+                total = (total + mensal) * (1 + taxaMensal);
+                investido += mensal;
+            }
+            document.getElementById('res-investido').innerText = 'R$ ' + investido.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('res-rendimento').innerText = 'R$ ' + (total - investido).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('res-final').innerText = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            renderizarGrafico(investido, total - investido);
         }
 
-        function calcularHabito() {
-            const v = parseFloat(document.getElementById('habit').value) || 0;
-            document.getElementById('resHabito').innerHTML = `Se gasta R$ ${v}/dia, em 1 ano você perde <b>R$ ${(v * 365).toLocaleString('pt-BR')}</b>.`;
+        function renderizarGrafico(investido, rendimento) {
+            const ctx = document.getElementById('meuGrafico').getContext('2d');
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: ['Investido', 'Rendimento'], datasets: [{ data: [investido.toFixed(2), rendimento.toFixed(2)], backgroundColor: ['#3b82f6', '#10b981'] }] },
+                options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#000000', font: { weight: 'bold' }, formatter: (value, ctx) => { let sum = ctx.dataset.data.reduce((a, b) => parseFloat(a) + parseFloat(b), 0); let percentage = ((value * 100) / sum).toFixed(1) + "%"; let valFormat = "R$ " + parseFloat(value).toLocaleString('pt-BR', {maximumFractionDigits: 0}); return percentage + "\n" + valFormat; } } } }
+            });
         }
+        buscarCDI();
     </script>
 </body>
 </html>

@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Favicon (Ícone do navegador) -->
+    <link rel="icon" type="image/png" href="logo.png">
+    
+    <!-- Configuração PWA (Manifest) -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Suporte para iOS (iPhone) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="SimuladorInvest">
+    <link rel="apple-touch-icon" href="logo.png">
     <title>SimuladorInvest - Calcule seus Rendimentos CDI</title>
     <meta name="description" content="Simulador de investimentos gratuito para calcular seus rendimentos baseados na taxa CDI atual. Planeje seu futuro financeiro com facilidade.">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,6 +36,9 @@
 <body>
 
     <div id="splash-screen">
+        <!-- Logo em PNG -->
+        <img src="logo.png" alt="Logo SimuladorInvest" class="w-24 h-24 mb-4 object-contain">
+        
         <h1 class="text-3xl font-bold text-blue-600 mb-6">SimuladorInvest</h1>
         <div class="spinner"></div>
         <p class="text-slate-500 font-medium">Conectando ao CDI atual...</p>

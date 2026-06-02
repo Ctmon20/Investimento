@@ -22,9 +22,38 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <style>
+<style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
-        .container-app { width: 100%; max-width: 450px; }
+        
+        /* Container responsivo */
+        .container-app { 
+            width: 100%; 
+            max-width: 450px; 
+            margin: 0 auto; 
+        }
+
+        /* Ajustes para Computadores (telas maiores que 768px) */
+        @media (min-width: 768px) {
+            .container-app {
+                max-width: 800px; 
+            }
+            
+            /* Coloca os cartões de resultado lado a lado no PC */
+            #resultado-container {
+                display: flex;
+                gap: 15px;
+            }
+            .res-card {
+                flex: 1; /* Divide o espaço igualmente entre os 3 cards */
+                margin-bottom: 0; /* Remove a margem inferior que existe no mobile */
+            }
+        }
+        
+        #meuGrafico {
+            height: 350px !important; /* Aumentei um pouco para dar destaque às linhas no PC */
+            width: 100% !important;
+        }
+
         .card { background: white; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 20px; }
         .label-text { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 5px; display: block; }
         .input-box { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; }
@@ -63,6 +92,7 @@
             <input type="number" id="tempo" class="input-box" value="5" oninput="calcular()" aria-label="Tempo em Anos">
         </div>
 
+        <!-- Certifique-se de que esta DIV envolve os 3 cartões -->
         <div id="resultado-container">
             <div class="res-card">
                 <p class="text-xs text-slate-500 uppercase">Total Investido</p>
@@ -158,10 +188,49 @@
         function renderizarGrafico(investido, rendimento) {
             const ctx = document.getElementById('meuGrafico').getContext('2d');
             if(chart) chart.destroy();
+
+            const isDesktop = window.innerWidth >= 768;
+
+            // Configuração para 2 linhas no PC ou Rosca no Mobile
             chart = new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: ['Investido', 'Rendimento'], datasets: [{ data: [investido.toFixed(2), rendimento.toFixed(2)], backgroundColor: ['#3b82f6', '#10b981'] }] },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#000000', font: { weight: 'bold' }, formatter: (value, ctx) => { let sum = ctx.dataset.data.reduce((a, b) => parseFloat(a) + parseFloat(b), 0); let percentage = ((value * 100) / sum).toFixed(1) + "%"; let valFormat = "R$ " + parseFloat(value).toLocaleString('pt-BR', {maximumFractionDigits: 0}); return percentage + "\n" + valFormat; } } } }
+                type: isDesktop ? 'line' : 'doughnut',
+                data: {
+                    labels: isDesktop ? ['Início', 'Final'] : ['Investido', 'Rendimento'],
+                    datasets: isDesktop ? [
+                        {
+                            label: 'Total Investido',
+                            data: [0, investido],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Rendimento',
+                            data: [0, rendimento],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ] : [
+                        {
+                            data: [investido, rendimento],
+                            backgroundColor: ['#3b82f6', '#10b981']
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        datalabels: {
+                            display: !isDesktop, // Datalabels apenas no mobile
+                            formatter: (value, ctx) => "R$ " + parseFloat(value).toLocaleString('pt-BR', {maximumFractionDigits: 0})
+                        }
+                    }
+                }
             });
         }
         buscarCDI();

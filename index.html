@@ -1,18 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    <script type="text/javascript" src="https://example.com/adcash-library.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Adicionado para melhorar a experiência PWA -->
     <meta name="theme-color" content="#2563eb"> 
     
-    <!-- Favicon (Ícone do navegador) -->
     <link rel="icon" type="image/png" href="logo.png">
     
-    <!-- Configuração PWA (Manifest) -->
     <link rel="manifest" href="manifest.json">
     
-    <!-- Suporte para iOS (iPhone) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="SimuladorInvest">
@@ -82,6 +80,12 @@
             </div>
         </div>
 
+        <div id="banner-adcash" class="mb-6">
+            <script type="text/javascript">
+                runBanner();
+            </script>
+        </div>
+
         <div class="card">
             <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">Dados do Investimento</h2>
             <label class="label-text">Aporte Mensal (R$)</label>
@@ -92,7 +96,6 @@
             <input type="number" id="tempo" class="input-box" value="5" oninput="calcular()" aria-label="Tempo em Anos">
         </div>
 
-        <!-- Certifique-se de que esta DIV envolve os 3 cartões -->
         <div id="resultado-container">
             <div class="res-card">
                 <p class="text-xs text-slate-500 uppercase">Total Investido</p>
@@ -113,7 +116,6 @@
             <canvas id="meuGrafico"></canvas>
         </div>
 
-        <!-- Conteúdo Adicional para SEO -->
         <div class="card">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Como funciona o cálculo de investimentos</h2>
             <p class="text-sm text-gray-600 mb-4">

@@ -21,8 +21,14 @@
     <title>SimuladorInvest - Calcule seus Rendimentos CDI</title>
     <meta name="description" content="Simulador de investimentos gratuito para calcular seus rendimentos baseados na taxa CDI atual. Planeje seu futuro financeiro com facilidade.">
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; }
         
@@ -63,6 +69,49 @@
         #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { width: 50px; height: 50px; border: 5px solid #e2e8f0; border-top: 5px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .dark-mode {
+            background: #0f172a !important;
+            color: white;
+        }
+
+        .dark-mode .card {
+            background: #1e293b;
+            color: white;
+        }
+
+        .dark-mode .res-card {
+            background: #334155;
+            border-color: #475569;
+        }
+
+        .dark-mode .input-box {
+            background: #0f172a;
+            color: white;
+            border: 1px solid #475569;
+        }
+
+        .dark-mode .label-text {
+            color: #cbd5e1;
+        }
+
+        .dark-mode p,
+        .dark-mode span,
+        .dark-mode th,
+        .dark-mode td,
+        .dark-mode h1,
+        .dark-mode h2 {
+            color: white !important;
+        }
+
+        .dark-mode footer {
+            color: #cbd5e1;
+        }
+
+        .dark-mode #splash-screen {
+            background: #0f172a;
+        }
+
     </style>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-NV9SCLWNPK"></script>
@@ -85,7 +134,14 @@
     </div>
 
     <div class="container-app">
+
         <div class="flex items-center gap-3 mb-6 bg-blue-200 p-4 rounded-xl border border-blue-300">
+            <div class="flex justify-end mb-4">
+            <button id="btn-dark"
+                class="bg-slate-800 text-white px-4 py-2 rounded-lg">
+                🌙 Modo Dark
+            </button>
+        </div>
             <div class="bg-blue-700 p-3 rounded-xl text-white">⚙️</div>
             <div>
                 <h1 class="text-xl font-bold text-blue-950">Simulador de Investimentos</h1>
@@ -94,42 +150,268 @@
         </div>
 
         <div id="banner-adcash" class="mb-6">
-            <script type="text/javascript">
+            <script>
                 runBanner();
             </script>
         </div>
 
+        <!-- DADOS DO INVESTIMENTO -->
         <div class="card">
-            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">Dados do Investimento</h2>
+
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">
+                Dados do Investimento
+            </h2>
+
             <label class="label-text">Aporte Mensal (R$)</label>
-            <input type="number" id="mensal" class="input-box" value="1000" oninput="calcular()" aria-label="Aporte Mensal">
+            <input type="number"
+                   id="mensal"
+                   class="input-box"
+                   value="1000"
+                   oninput="calcular()">
+
             <label class="label-text">Taxa CDI Anual (%)</label>
-            <input type="number" id="taxa" class="input-box" value="13.5" step="0.1" oninput="calcular()" aria-label="Taxa CDI Anual">
+            <input type="number"
+                   id="taxa"
+                   class="input-box"
+                   value="13.5"
+                   step="0.1"
+                   oninput="calcular()">
+
             <label class="label-text">Tempo de Investimento (Anos)</label>
-            <input type="number" id="tempo" class="input-box" value="5" oninput="calcular()" aria-label="Tempo em Anos">
+            <input type="number"
+                   id="tempo"
+                   class="input-box"
+                   value="5"
+                   oninput="calcular()">
+
+            <label class="label-text">Meta Financeira (R$)</label>
+            <input type="number"
+                   id="meta"
+                   class="input-box"
+                   value="1000000"
+                   oninput="calcular()">
+
         </div>
 
+        <!-- RESULTADOS -->
         <div id="resultado-container">
+
             <div class="res-card">
                 <p class="text-xs text-slate-500 uppercase">Total Investido</p>
-                <div id="res-investido" class="text-xl font-bold">R$ 0,00</div>
+                <div id="res-investido" class="text-xl font-bold">
+                    R$ 0,00
+                </div>
             </div>
+
             <div class="res-card">
                 <p class="text-xs text-slate-500 uppercase">Rendimento</p>
-                <div id="res-rendimento" class="text-xl font-bold">R$ 0,00</div>
+                <div id="res-rendimento" class="text-xl font-bold">
+                    R$ 0,00
+                </div>
             </div>
+
             <div class="res-card bg-orange-50 border-orange-100">
                 <p class="text-xs text-orange-600 uppercase">Valor Final</p>
-                <div id="res-final" class="text-2xl font-black text-orange-600">R$ 0,00</div>
+                <div id="res-final" class="text-2xl font-black text-orange-600">
+                    R$ 0,00
+                </div>
             </div>
+
         </div>
 
+        <!-- META FINANCEIRA -->
         <div class="card">
-            <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">Composição do Valor</h2>
+
+            <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
+                Meta Financeira
+            </h2>
+
+            <div class="mb-3">
+
+                <div class="flex justify-between text-sm">
+                    <span>Progresso da Meta</span>
+                    <span id="percentual-meta">0%</span>
+                </div>
+
+                <div class="w-full bg-gray-200 rounded-full h-4 mt-2">
+                    <div id="barra-meta"
+                         class="bg-green-500 h-4 rounded-full"
+                         style="width:0%">
+                    </div>
+                </div>
+
+            </div>
+
+            <p class="text-sm text-gray-600">
+                Falta:
+                <strong id="faltante-meta">
+                    R$ 0,00
+                </strong>
+            </p>
+
+        </div>
+
+        <!-- APORTE NECESSÁRIO -->
+        <div class="card">
+
+            <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
+                Aporte Necessário para Atingir a Meta
+            </h2>
+
+            <div class="res-card">
+
+                <p class="text-xs text-slate-500 uppercase">
+                    Investimento mensal recomendado
+                </p>
+
+                <div id="aporte-necessario"
+                    class="text-2xl font-bold text-indigo-600">
+
+                    R$ 0,00
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RENDA PASSIVA -->
+        <div class="card">
+
+            <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
+                Renda passiva estimada após o período
+            </h2>
+
+            <div class="res-card">
+
+                <p class="text-xs text-slate-500 uppercase">
+                    Renda mensal (0,8%)
+                </p>
+
+                <div id="renda-passiva"
+                    class="text-2xl font-bold text-green-600">
+                    R$ 0,00
+                </div>
+
+                <p class="text-sm text-gray-500 mt-3">
+                    Renda anual:
+                    <strong id="renda-anual">
+                        R$ 0,00
+                    </strong>
+                </p>
+
+            </div>
+
+        </div>
+
+        <!-- INFLAÇÃO -->
+        <div class="card">
+
+            <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
+                Poder de Compra Real
+            </h2>
+
+            <div class="res-card">
+
+                <p class="text-xs text-slate-500 uppercase">
+                    Valor Futuro Bruto
+                </p>
+
+                <div id="valor-bruto"
+                    class="text-xl font-bold text-blue-600">
+                    R$ 0,00
+                </div>
+
+            </div>
+
+            <div class="res-card mt-3">
+
+                <p class="text-xs text-slate-500 uppercase">
+                    Valor Corrigido pela Inflação
+                </p>
+
+                <div id="valor-real"
+                    class="text-xl font-bold text-purple-600">
+                    R$ 0,00
+                </div>
+
+            </div>
+
+            <p class="text-sm text-gray-500 mt-4">
+                O valor real é uma estimativa baseada em uma inflação hipotética de 4% ao ano. A inflação futura pode ser diferente.
+            </p>
+            </p>
+
+        </div>
+
+        <!-- GRÁFICO -->
+        <div class="card">
+
+            <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
+                Composição do Valor
+            </h2>
+
             <canvas id="meuGrafico"></canvas>
+
         </div>
 
-        <div class="card">
+<div class="card">
+
+    <button onclick="exportarPDF()"
+            class="w-full bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700">
+
+        📄 Exportar Simulação em PDF
+
+    </button>
+
+</div>
+
+<!-- EVOLUÇÃO DO PATRIMÔNIO -->
+<div class="card">
+
+    <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
+        Evolução do Patrimônio
+    </h2>
+
+    <div class="overflow-x-auto">
+
+        <table class="w-full text-sm">
+
+            <thead>
+
+                <tr class="border-b">
+
+                    <th class="text-left py-3">
+                        Ano
+                    </th>
+
+                    <th class="text-right py-3">
+                        Investido
+                    </th>
+
+                    <th class="text-right py-3">
+                        Rendimentos
+                    </th>
+
+                    <th class="text-right py-3">
+                        Patrimônio
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="tabela-evolucao">
+                <!-- preenchido pelo JavaScript -->
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<div class="card">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Como funciona o cálculo de investimentos</h2>
             <p class="text-sm text-gray-600 mb-4">
                 O segredo para construir patrimônio está nos <strong>juros compostos</strong>. Diferente dos juros simples, onde você ganha rendimento apenas sobre o valor inicial, nos juros compostos o seu rendimento também rende. Com aportes mensais constantes, esse efeito é potencializado ao longo dos anos.
@@ -177,73 +459,311 @@
             <h3 class="font-bold text-gray-800 mb-2">Por que usar o SimuladorInvest?</h3>
             <p class="text-sm text-gray-600">Nosso simulador utiliza a taxa CDI em tempo real para que você tenha uma projeção fiel de como seu dinheiro rende na renda fixa. O aporte mensal constante é a forma mais eficaz de acumular patrimônio através dos juros compostos.</p>
         </div>
-    </div>
+    </div> 
+
 
     <footer class="w-full text-center p-6 text-gray-500 text-xs">
         <p>&copy; 2026 SimuladorInvest. Todos os direitos reservados.</p>
+
         <div class="mt-2 space-x-2">
-            <a href="privacidade.html" class="hover:text-blue-600">Política de Privacidade</a> |
-            <a href="termos.html" class="hover:text-blue-600">Termos de Uso</a>
+            <a href="privacidade.html" class="hover:text-blue-600">
+                Política de Privacidade
+            </a>
+            |
+            <a href="termos.html" class="hover:text-blue-600">
+                Termos de Uso
+            </a>
         </div>
     </footer>
 
+
     <script>
-        Chart.register(ChartDataLabels);
-        let chart;
+    Chart.register(ChartDataLabels);
 
-        async function buscarCDI() {
-            try {
-                const res = await fetch('https://brasilapi.com.br/api/taxas/v1');
-                const data = await res.json();
-                const cdi = data.find(item => item.nome === "CDI");
-                if (cdi) {
-                    document.getElementById('taxa').value = cdi.valor;
-                    document.getElementById('cdi-status').innerText = `Baseado em ${cdi.valor}% CDI atual`;
-                }
-            } catch (e) {
-                document.getElementById('cdi-status').innerText = "Calcule com base no CDI";
-            } finally {
-                setTimeout(() => { document.getElementById('splash-screen').style.display = 'none'; }, 1000);
-                calcular();
+    let chart;
+
+    async function buscarCDI() {
+        try {
+
+            const res = await fetch('https://brasilapi.com.br/api/taxas/v1');
+            const data = await res.json();
+
+            const cdi = data.find(item => item.nome === "CDI");
+
+            if (cdi) {
+                document.getElementById('taxa').value = cdi.valor;
+                document.getElementById('cdi-status').innerText =
+                    `Baseado em ${cdi.valor}% CDI atual`;
             }
+
+        } catch (e) {
+
+            document.getElementById('cdi-status').innerText =
+                "Calcule com base no CDI";
+
+        } finally {
+
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.display = 'none';
+            }, 1000);
+
+            calcular();
+        }
+    }
+
+    function carregarDadosSalvos() {
+
+        if (localStorage.getItem('mensal')) {
+            document.getElementById('mensal').value =
+                localStorage.getItem('mensal');
         }
 
-        function calcular() {
-            const mensal = Math.max(0, parseFloat(document.getElementById('mensal').value) || 0);
-            const taxaAnual = Math.max(0, parseFloat(document.getElementById('taxa').value) / 100 || 0);
-            const anos = Math.max(0, parseInt(document.getElementById('tempo').value) || 0);
-            
-            const taxaMensal = Math.pow(1 + taxaAnual, 1/12) - 1;
-            const meses = anos * 12;
-            let total = 0;
-            let investido = 0;
-            for(let i = 1; i <= meses; i++) {
-                total = (total + mensal) * (1 + taxaMensal);
-                investido += mensal;
-            }
-            document.getElementById('res-investido').innerText = 'R$ ' + investido.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            document.getElementById('res-rendimento').innerText = 'R$ ' + (total - investido).toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            document.getElementById('res-final').innerText = 'R$ ' + total.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-            renderizarGrafico(investido, total - investido);
+        if (localStorage.getItem('taxa')) {
+            document.getElementById('taxa').value =
+                localStorage.getItem('taxa');
         }
 
-        function renderizarGrafico(investido, rendimento) {
-            const ctx = document.getElementById('meuGrafico').getContext('2d');
-            if(chart) chart.destroy();
+        if (localStorage.getItem('tempo')) {
+            document.getElementById('tempo').value =
+                localStorage.getItem('tempo');
+        }
 
-            const isDesktop = window.innerWidth >= 768;
+        if (localStorage.getItem('meta')) {
+            document.getElementById('meta').value =
+                localStorage.getItem('meta');
+        }
+    }
 
-            // Configuração para 2 linhas no PC ou Rosca no Mobile
-            chart = new Chart(ctx, {
-                type: isDesktop ? 'line' : 'doughnut',
-                data: {
-                    labels: isDesktop ? ['Início', 'Final'] : ['Investido', 'Rendimento'],
-                    datasets: isDesktop ? [
+    function calcular() {
+
+    const mensal = Math.max(
+        0,
+        parseFloat(document.getElementById('mensal').value) || 0
+    );
+
+    const taxaAnual = Math.max(
+        0,
+        parseFloat(document.getElementById('taxa').value) / 100 || 0
+    );
+
+    const anos = Math.max(
+        0,
+        parseInt(document.getElementById('tempo').value) || 0
+    );
+
+    const meses = anos * 12;
+
+    const taxaMensal =
+        Math.pow(1 + taxaAnual, 1 / 12) - 1;
+
+    let total = 0;
+    let investido = 0;
+
+    for (let i = 1; i <= meses; i++) {
+
+        total = (total + mensal) * (1 + taxaMensal);
+
+        investido += mensal;
+
+    }
+
+    // RESULTADOS
+    document.getElementById('res-investido').innerText =
+        'R$ ' + investido.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2
+        });
+
+    document.getElementById('res-rendimento').innerText =
+        'R$ ' + (total - investido).toLocaleString('pt-BR', {
+            minimumFractionDigits: 2
+        });
+
+    document.getElementById('res-final').innerText =
+        'R$ ' + total.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2
+        });
+
+    // META FINANCEIRA
+    const meta =
+        parseFloat(document.getElementById('meta').value) || 0;
+
+    const percentual =
+        meta > 0 ? (total / meta) * 100 : 0;
+
+    document.getElementById('percentual-meta').innerText =
+        percentual.toFixed(1) + '%';
+
+    document.getElementById('barra-meta').style.width =
+        Math.min(percentual, 100) + '%';
+
+    const faltante = Math.max(meta - total, 0);
+
+    document.getElementById('faltante-meta').innerText =
+        'R$ ' + faltante.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2
+        });
+
+    // APORTE NECESSÁRIO PARA A META
+    let aporteNecessario = 0;
+
+    if (meta > 0 && meses > 0) {
+
+        if (taxaMensal > 0) {
+
+            aporteNecessario =
+                meta /
+                (
+                    (
+                        (Math.pow(1 + taxaMensal, meses) - 1)
+                        / taxaMensal
+                    ) * (1 + taxaMensal)
+                );
+
+        } else {
+
+            aporteNecessario = meta / meses;
+
+        }
+
+    }
+
+    document.getElementById('aporte-necessario').innerText =
+        'R$ ' +
+        aporteNecessario.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2
+        });
+
+    // RENDA PASSIVA
+    const rendaPassiva = total * 0.008;
+
+    document.getElementById('renda-passiva').innerText =
+        'R$ ' + rendaPassiva.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2
+        });
+
+    // RENDA PASSIVA ANUAL
+    const rendaAnual = rendaPassiva * 12;
+
+    document.getElementById('renda-anual').innerText =
+        'R$ ' + rendaAnual.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2
+        });
+
+    // PODER DE COMPRA REAL
+    const inflacao = 0.04;
+
+    const valorReal =
+        total / Math.pow(1 + inflacao, anos);
+
+    document.getElementById('valor-bruto').innerText =
+        'R$ ' + total.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2
+        });
+
+    document.getElementById('valor-real').innerText =
+        'R$ ' + valorReal.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2
+        });
+
+    // SALVAR DADOS
+    localStorage.setItem('mensal', mensal);
+    localStorage.setItem('taxa', taxaAnual * 100);
+    localStorage.setItem('tempo', anos);
+    localStorage.setItem('meta', meta);
+
+    // EVOLUÇÃO ANUAL
+    let tabela = '';
+
+    for (let ano = 1; ano <= anos; ano++) {
+
+        let patrimonioAno = 0;
+
+        for (let mes = 1; mes <= ano * 12; mes++) {
+
+            patrimonioAno =
+                (patrimonioAno + mensal) * (1 + taxaMensal);
+
+        }
+
+        const investidoAno =
+            mensal * (ano * 12);
+
+        const rendimentoAno =
+            patrimonioAno - investidoAno;
+
+        tabela += `
+            <tr class="border-b hover:bg-gray-50">
+
+                <td class="py-3">
+                    ${ano}
+                </td>
+
+                <td class="text-right py-3">
+                    R$ ${investidoAno.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2
+                    })}
+                </td>
+
+                <td class="text-right py-3 text-green-600">
+                    R$ ${rendimentoAno.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2
+                    })}
+                </td>
+
+                <td class="text-right py-3 font-bold text-blue-600">
+                    R$ ${patrimonioAno.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2
+                    })}
+                </td>
+
+            </tr>
+        `;
+    }
+
+    const tabelaEvolucao =
+        document.getElementById('tabela-evolucao');
+
+    if (tabelaEvolucao) {
+
+        tabelaEvolucao.innerHTML = tabela;
+
+    }
+
+    // ATUALIZA O GRÁFICO
+    renderizarGrafico(
+        investido,
+        total - investido
+    );
+
+}
+
+    function renderizarGrafico(investido, rendimento) {
+
+        const ctx = document.getElementById('meuGrafico').getContext('2d');
+
+        if (chart) chart.destroy();
+
+        const isDesktop = window.innerWidth >= 768;
+
+        chart = new Chart(ctx, {
+
+            type: isDesktop ? 'line' : 'doughnut',
+
+            data: {
+
+                labels: isDesktop ?
+                    ['Início', 'Final']
+                    :
+                    ['Investido', 'Rendimento'],
+
+                datasets: isDesktop ?
+
+                    [
                         {
                             label: 'Total Investido',
                             data: [0, investido],
                             borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            backgroundColor: 'rgba(59,130,246,0.1)',
                             fill: true,
                             tension: 0.4
                         },
@@ -251,31 +771,162 @@
                             label: 'Rendimento',
                             data: [0, rendimento],
                             borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            backgroundColor: 'rgba(16,185,129,0.1)',
                             fill: true,
                             tension: 0.4
                         }
-                    ] : [
+                    ]
+
+                    :
+
+                    [
                         {
                             data: [investido, rendimento],
                             backgroundColor: ['#3b82f6', '#10b981']
                         }
                     ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        datalabels: {
-                            display: !isDesktop, // Datalabels apenas no mobile
-                            formatter: (value, ctx) => "R$ " + parseFloat(value).toLocaleString('pt-BR', {maximumFractionDigits: 0})
-                        }
+            },
+
+            options: {
+
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+                        position: 'bottom'
+                    },
+
+                    datalabels: {
+
+                        display: !isDesktop,
+
+                        formatter: (value) =>
+                            "R$ " +
+                            parseFloat(value).toLocaleString('pt-BR', {
+                                maximumFractionDigits: 0
+                            })
                     }
                 }
-            });
+            }
+        });
+    }
+// CARREGAR MODO SALVO
+if (localStorage.getItem("darkMode") === "true") {
+    document.body.classList.add("dark-mode");
+}
+
+document.getElementById("btn-dark").addEventListener("click", () => {
+
+    document.body.classList.toggle("dark-mode");
+
+    localStorage.setItem(
+        "darkMode",
+        document.body.classList.contains("dark-mode")
+    );
+
+});
+
+function moeda(valor) {
+    return valor.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
+}
+
+function exportarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    // 1. OBTENÇÃO DOS DADOS
+    const mensal = parseFloat(document.getElementById("mensal").value) || 0;
+    const taxa = parseFloat(document.getElementById("taxa").value) || 0;
+    const anos = parseInt(document.getElementById("tempo").value) || 0;
+    const meta = parseFloat(document.getElementById("meta").value) || 0;
+    const taxaMensal = Math.pow(1 + (taxa / 100), 1 / 12) - 1;
+
+    const totalInvestido = document.getElementById("res-investido").innerText;
+    const rendimento = document.getElementById("res-rendimento").innerText;
+    const valorFinal = document.getElementById("res-final").innerText;
+    const valorReal = document.getElementById("valor-real").innerText;
+    const rendaPassiva = document.getElementById("renda-passiva").innerText;
+    const rendaAnual = document.getElementById("renda-anual").innerText;
+
+    // 2. CABEÇALHO
+    doc.setFillColor(37, 99, 235);
+    doc.rect(0, 0, 210, 25, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.text("SimuladorInvest", 15, 15);
+    doc.setFontSize(9);
+    doc.text("Relatório da Simulação Financeira", 15, 21);
+    
+    // 3. DADOS DO INVESTIMENTO E RESULTADOS
+    doc.setTextColor(0, 0, 0);
+    let y = 35;
+    doc.setFontSize(12);
+    doc.text("Dados do Investimento", 15, y);
+    doc.text("Resultados da Simulação", 110, y);
+    
+    y += 7;
+    doc.setFontSize(9);
+    doc.text(`Aporte Mensal: ${moeda(mensal)}`, 15, y);
+    doc.text(`Total Investido: ${totalInvestido}`, 110, y);
+    y += 6;
+    doc.text(`Taxa CDI: ${taxa.toFixed(2)}% ao ano`, 15, y);
+    doc.text(`Rendimentos: ${rendimento}`, 110, y);
+    y += 6;
+    doc.text(`Prazo: ${anos} anos`, 15, y);
+    doc.text(`Patrimônio Final: ${valorFinal}`, 110, y);
+    y += 6;
+    doc.text(`Meta: ${moeda(meta)}`, 15, y);
+    doc.text(`Valor Real (descontado a inflação): ${valorReal}`, 110, y);
+
+    // 4. GRÁFICO
+    y += 12;
+    doc.setFontSize(12);
+    doc.text("Composição do Valor", 15, y);
+    const grafico = document.getElementById("meuGrafico");
+    const imagemGrafico = grafico.toDataURL("image/png", 1.0);
+    doc.addImage(imagemGrafico, "PNG", 15, y + 2, 180, 55);
+
+    // 5. TABELA (Evolução)
+    y += 65;
+    doc.setFontSize(12);
+    doc.text("Evolução do Patrimônio", 15, y);
+    
+    let linhas = [];
+    for (let ano = 1; ano <= anos; ano++) {
+        let patrimonioAno = 0;
+        for (let mes = 1; mes <= ano * 12; mes++) {
+            patrimonioAno = (patrimonioAno + mensal) * (1 + taxaMensal);
         }
-        buscarCDI();
-    </script>
+        const investidoAno = mensal * (ano * 12);
+        const rendimentoAno = patrimonioAno - investidoAno;
+        linhas.push([ano.toString(), moeda(investidoAno), moeda(rendimentoAno), moeda(patrimonioAno)]);
+    }
+
+    doc.autoTable({
+        startY: y + 3,
+        head: [["Ano", "Investido", "Rendimentos", "Patrimônio"]],
+        body: linhas,
+        theme: "grid",
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [37, 99, 235] }
+    });
+
+    // 6. FINALIZAR
+    doc.save("SimulacaoInvestimento.pdf");
+}
+
+// Certifique-se de ter esta função de suporte:
+function moeda(valor) {
+    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+    carregarDadosSalvos();
+    buscarCDI();
+
+</script>
 </body>
 </html>

@@ -113,7 +113,6 @@
         }
 
     </style>
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-NV9SCLWNPK"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -155,7 +154,6 @@
             </script>
         </div>
 
-        <!-- DADOS DO INVESTIMENTO -->
         <div class="card">
 
             <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6">
@@ -193,7 +191,6 @@
 
         </div>
 
-        <!-- RESULTADOS -->
         <div id="resultado-container">
 
             <div class="res-card">
@@ -219,7 +216,6 @@
 
         </div>
 
-        <!-- META FINANCEIRA -->
         <div class="card">
 
             <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
@@ -251,7 +247,6 @@
 
         </div>
 
-        <!-- APORTE NECESSÁRIO -->
         <div class="card">
 
             <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
@@ -275,7 +270,6 @@
 
         </div>
 
-        <!-- RENDA PASSIVA -->
         <div class="card">
 
             <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
@@ -304,7 +298,6 @@
 
         </div>
 
-        <!-- INFLAÇÃO -->
         <div class="card">
 
             <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
@@ -344,7 +337,6 @@
 
         </div>
 
-        <!-- GRÁFICO -->
         <div class="card">
 
             <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
@@ -356,17 +348,11 @@
         </div>
 
 <div class="card">
-
-    <button onclick="exportarPDF()"
-            class="w-full bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700">
-
-        📄 Exportar Simulação em PDF
-
+    <button onclick="abrirModal()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-indigo-200 transform transition hover:scale-[1.02] flex items-center justify-center gap-2">
+        📥 Exportar Relatório em PDF
     </button>
-
 </div>
 
-<!-- EVOLUÇÃO DO PATRIMÔNIO -->
 <div class="card">
 
     <h2 class="text-sm font-bold text-slate-400 uppercase mb-4">
@@ -402,7 +388,6 @@
             </thead>
 
             <tbody id="tabela-evolucao">
-                <!-- preenchido pelo JavaScript -->
             </tbody>
 
         </table>
@@ -920,13 +905,114 @@ function exportarPDF() {
     doc.save("SimulacaoInvestimento.pdf");
 }
 
-// Certifique-se de ter esta função de suporte:
-function moeda(valor) {
-    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+function abrirModal() {
+    document.getElementById('email-modal').classList.remove('hidden');
+}
+
+function fecharModal() {
+    document.getElementById('email-modal').classList.add('hidden');
+}
+
+async function validarEmailModal(event) {
+    const input = document.getElementById('input-email');
+    const btnConfirmar = event.target; 
+    
+    // --- VERIFICAÇÃO COM MODAL DE AVISO ---
+    if (!input || !input.value.trim()) {
+        document.getElementById('modalAviso').classList.remove('hidden');
+        return;
+    }
+    
+    // --- ESTADO DE LOADING ---
+    const textoOriginal = btnConfirmar.innerText;
+    btnConfirmar.innerText = "Verificando...";
+    btnConfirmar.disabled = true;
+    btnConfirmar.classList.add("opacity-50");
+    
+    const email = input.value;
+    const urlBase = "https://script.google.com/macros/s/AKfycbyRhLwfUYdU6EJ57NmHAgN_5-02r9F85-CGgA2MWapbEN2Hggl-fMp3V0XNm270Mvcj/exec";
+    
+    const script = document.createElement('script');
+    const callbackName = 'callback' + Math.round(100000 * Math.random());
+    
+    window[callbackName] = function(data) {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        
+        // --- RESTAURA O BOTÃO ---
+        btnConfirmar.innerText = textoOriginal;
+        btnConfirmar.disabled = false;
+        btnConfirmar.classList.remove("opacity-50");
+
+        if (data === "sim") {
+            localStorage.setItem("user_email", email);
+            fecharModal(); 
+            exportarPDF();
+        } else {
+            fecharModal(); 
+            document.getElementById('modalPagamento').classList.remove('hidden');
+        }
+    };
+
+    script.src = `${urlBase}?email=${encodeURIComponent(email)}&callback=${callbackName}`;
+    document.body.appendChild(script);
 }
     carregarDadosSalvos();
     buscarCDI();
 
 </script>
+<div id="email-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl">
+        <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4">Acesso ao Relatório</h3>
+        <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">Informe seu e-mail para desbloquear o download do PDF:</p>
+        
+        <input type="email" id="input-email" placeholder="seuemail@exemplo.com" class="w-full p-3 mb-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700 text-slate-800 dark:text-white">
+        
+        <div class="text-xs text-slate-500 dark:text-slate-400 mb-6 text-center">
+    <p class="mb-1">Teve problemas com a liberação?</p>
+    <p>E-mail: <strong>sidcleysidcley@gmail.com</strong></p>
+    <p>
+        Telegram: 
+        <a href="https://t.me/Ctmon2007" target="_blank" class="text-blue-500 hover:underline font-bold">
+            @Ctmon2007
+        </a>
+    </p>
+</div>
+
+        <div class="flex gap-2">
+            <button onclick="fecharModal()" class="flex-1 py-2 text-slate-500 font-bold">Cancelar</button>
+            <button onclick="validarEmailModal(event)" class="flex-1 py-2 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200">
+    Confirmar
+</button>
+        </div>
+    </div>
+</div>
+<div id="modalPagamento" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-[10001] p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm text-center">
+        <h2 class="text-xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
+        <p class="text-gray-600 mb-6">
+            Para baixar o PDF de todas as suas simulações, assine nosso plano por apenas 
+            <span class="font-bold text-blue-600 text-lg">R$ 19,90/mês</span>.
+        </p>
+        <button onclick="window.open('https://mpago.la/2VGpWzY', '_blank')" 
+                class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold mb-3 hover:bg-blue-700 transition">
+            Assinar por R$ 19,90/mês
+        </button>
+        <button onclick="document.getElementById('modalPagamento').classList.add('hidden')" 
+                class="text-gray-400 hover:text-gray-600 underline text-sm">
+            Talvez mais tarde
+        </button>
+    </div>
+</div>
+<div id="modalAviso" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-[20000] p-4">
+    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm text-center">
+        <h2 class="text-lg font-bold text-amber-600 mb-2">Atenção!</h2>
+        <p class="text-gray-600 mb-6">Por favor, insira um e-mail válido para continuar.</p>
+        <button onclick="document.getElementById('modalAviso').classList.add('hidden')" 
+                class="w-full py-2 bg-slate-800 text-white rounded-xl font-bold">
+            Entendido
+        </button>
+    </div>
+</div>
 </body>
 </html>
